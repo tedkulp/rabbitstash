@@ -1,0 +1,3 @@
+Takes AMQP messages and converts them to logstash.
+
+More info later...
