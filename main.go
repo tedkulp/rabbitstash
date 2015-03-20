@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"time"
+	"net"
 	"encoding/json"
 
 	"github.com/streadway/amqp"
@@ -72,6 +73,10 @@ func main() {
 	failOnError(err, "Failed to open a channel")
 	defer ch.Close()
 
+	outConn, err := net.Dial("udp", "linuxutil01:9997")
+	failOnError(err, "Failed to connect to Logstash")
+	defer outConn.Close()
+
 	q, err := ch.QueueDeclare(
 		"logstash", // name
 		true,       // durable
@@ -98,7 +103,12 @@ func main() {
 	go func() {
 		for msg := range msgs {
 			packet := createJsonPacket(msg)
-			log.Println(packet)
+			fmt.Println(packet)
+			buf := []byte(packet)
+			_, err := outConn.Write(buf)
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 	}()
 
