@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"flag"
 	"log"
 	"time"
 	"net"
@@ -65,7 +66,20 @@ func createJsonPacket(d amqp.Delivery) string {
 }
 
 func main() {
-	conn, err := amqp.Dial("amqp://guest:guest@192.168.3.21:5672/")
+	amqpHost := flag.String("amqphost", "192.168.3.21", "Hostname of the AMQP server")
+	amqpPort := flag.Int("amqpport", 5672, "Port of the AMQP server")
+	amqpUser := flag.String("amqpuser", "guest", "User on the AMQP server")
+	amqpPass := flag.String("amqppass", "guest", "Password on the AMQP server")
+	amqpQueue := flag.String("amqpqueue", "logstash", "Queue on the AMQP server")
+
+	logstashHost := flag.String("loghost", "linuxutil01", "Hostname of the Logstash server")
+	logstashPort := flag.Int("logport", 9997, "Port of the Logstash server")
+
+	flag.Parse()
+
+	sourceAddr := fmt.Sprintf("amqp://%s:%s@%s:%d/", *amqpUser, *amqpPass, *amqpHost, *amqpPort)
+	fmt.Println(sourceAddr)
+	conn, err := amqp.Dial(sourceAddr)
 	failOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()
 
@@ -73,12 +87,14 @@ func main() {
 	failOnError(err, "Failed to open a channel")
 	defer ch.Close()
 
-	outConn, err := net.Dial("udp", "linuxutil01:9997")
+	destAddr := fmt.Sprintf("%s:%d", *logstashHost, *logstashPort)
+	fmt.Println(destAddr)
+	outConn, err := net.Dial("udp", destAddr)
 	failOnError(err, "Failed to connect to Logstash")
 	defer outConn.Close()
 
 	q, err := ch.QueueDeclare(
-		"logstash", // name
+		*amqpQueue, // name
 		true,       // durable
 		false,      // delete when usused
 		false,      // exclusive
