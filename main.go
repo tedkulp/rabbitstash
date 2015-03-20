@@ -72,7 +72,7 @@ func main() {
 	amqpPass := flag.String("amqppass", "guest", "Password on the AMQP server")
 	amqpQueue := flag.String("amqpqueue", "logstash", "Queue on the AMQP server")
 
-	logstashHost := flag.String("loghost", "linuxutil01", "Hostname of the Logstash server")
+	logstashHost := flag.String("loghost", "192.168.3.32", "Hostname of the Logstash server")
 	logstashPort := flag.Int("logport", 9997, "Port of the Logstash server")
 
 	flag.Parse()
